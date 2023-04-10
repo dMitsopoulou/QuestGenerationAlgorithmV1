@@ -3,7 +3,7 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        //Node<String> root = new Node<>("root");
+
         RandomSearch random_execution = new RandomSearch();
         EvolutionarySearch evolutionary_execution = new EvolutionarySearch();
 
