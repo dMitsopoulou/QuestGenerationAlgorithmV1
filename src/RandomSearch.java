@@ -4,9 +4,7 @@
  * @version 1.0
  */
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
 
 
@@ -20,8 +18,10 @@ public class RandomSearch {
     static ArrayList<Integer> characters;
     static ArrayList<Integer> items;
     static ArrayList<Integer> enemies;
+    static ArrayList<Integer> readables;
     static ArrayList<Location> chosenLocations;
     static ArrayList<Integer> chosenCharacters;
+    static int chosenItem;
     static ArrayList<ArrayList<ArrayList<Integer>>> population;
     static ArrayList<ArrayList<ArrayList<Integer>>> children;
     static ArrayList<ArrayList<ArrayList<Integer>>> parents;
@@ -39,7 +39,7 @@ public class RandomSearch {
         actions.add(104);   //Read
         actions.add(105);   //pickup
         actions.add(106);   //drop
-        actions.add(107);   //use
+        //actions.add(107);   //use
 
         //change to key - value pair map when you can
         locations.add(new Location(201));
@@ -74,15 +74,14 @@ public class RandomSearch {
  */
 
         items.add(301);
-        items.add(302);
         items.add(303);
-        items.add(304);
-        items.add(305);
         items.add(306);
         items.add(307);
         items.add(308);
-        items.add(309);
-        items.add(310);
+
+        readables.add(302);
+        readables.add(304);
+        readables.add(305);
 
         enemies.add(501);   //Super mutants
         enemies.add(502);   //Robots
@@ -99,45 +98,105 @@ public class RandomSearch {
     }
 
 
-    public static ArrayList<ArrayList<Integer>> randomQuest(){
-        ArrayList<Integer> task = new ArrayList<>();
-        ArrayList<ArrayList<Integer>> quest = new ArrayList<>();
-
-        chooseElements();   //chooses locations, characters, and enemies to pop into the tasks
-        for (int i=0; i< QUEST_SIZE;i++){
-           task.add(actions.get(random_method.nextInt()));  //adds actions in the quest
-            quest.add(task);
-            task.clear();
-        }
-
-
-
-        chooseElements();
-
-        quest.add(task);
-        return quest;
-
-    }
-
-    private static void chooseElements() {
-        //fill locations array, characters array, items array
-
-        //locations - 2
-        for (int i=0; i<2; i++){
-            chosenLocations.add(locations.get(random_method.nextInt()));  //gets one random location
-            chosenCharacters.add(chosenLocations.get(chosenLocations.size()-1).getCharacter(random_method.nextInt()));  //gets one random character from each location
-        }
-    }
-
-
     /**
      * one method to initialise the population randomly
      * Creates Population out of random quests
      */
     public static void initializePopulation(){
         population = new ArrayList<>();
-        for (int i=0; i< POPULATION_SIZE;i++){population.add(randomQuest());}    //make method to generate random quest }
+        for (int i=0; i< POPULATION_SIZE;i++){population.add(randomQuest());}    //make method to generate random quest
     }
+
+    public static ArrayList<ArrayList<Integer>> randomQuest(){
+        ArrayList<Integer> task = new ArrayList<>();
+        ArrayList<ArrayList<Integer>> quest = new ArrayList<>();
+
+        //choose elements to use
+        chooseElements();   //chooses locations, characters, and enemies to pop into the tasks
+        //fill  quests with random actions in tasks
+        for (int i=0; i< QUEST_SIZE;i++){
+            task.add(actions.get(random_method.nextInt(actions.size())));  //adds action in the task
+            quest.add(task);        //adds task to quest
+            task.clear();           //clears task
+        }
+        //populate tasks with chosen elements
+        fillTasks(quest);
+        //adds completed quest to population
+        return quest;
+    }
+
+    private static void fillTasks(ArrayList<ArrayList<Integer>> quest) {
+        ArrayList<Integer> task;
+        int currentLoc = 0;
+        int currentChar;
+
+        for(int i=0; i<quest.size(); i++){
+            task = quest.get(i);  //gets task from quest
+
+            if (task.get(0) == 101){    //goto
+                //go to a location you are not already in
+                for (Location loc : chosenLocations) {
+                   if(loc.getLocationName() != currentLoc) {    //if this is not current location, go to that
+                       task.add(loc.getLocationName());
+                       break;
+                   }
+                }
+                /*
+                Location loc = chosenLocations.get(random_method.nextInt(locations.size()));
+                task.add(loc.getLocationName());
+                currentLoc = loc.getLocationName(); //saves the last location used, as the player is supposed to be at that location now
+
+                 */
+            } else if (task.get(0) == 102) {    //talk to
+                // go find a character that is in the last location
+                if (currentLoc == 0){            //if a location task has not come beforehand, find random character
+                    currentChar = chosenCharacters.get(random_method.nextInt(chosenCharacters.size()));
+                    task.add(currentChar);      //add character to task
+
+                    String charToInt = String.valueOf(currentChar);
+                    currentLoc = Integer.parseInt(charToInt.substring(0,3));     //sets the latest location where that character is
+
+                } else {        //a location has come right before, get a character from that specific location
+                   String charToLoc;
+                    /*for (Location loc : chosenLocations){
+                        if(currentLoc == loc.getLocationName()){
+
+                        }
+                    }
+
+                     */
+                    for (int character: chosenCharacters) {     //access chosen characters and fetch one with the desired location name
+                       charToLoc = String.valueOf(character).substring(0, 3);
+                       if(currentLoc == Integer.parseInt(charToLoc)){
+                           task.add(character);     //add character to task
+                           break;
+                       }
+                    }
+                }
+            } else if (task.get(0) == 103) {    //fight
+                task.add(enemies.get(random_method.nextInt()));
+            } else if (task.get(0) == 104) {    //read
+                task.add(readables.get(random_method.nextInt()));
+            } else if (task.get(0) == 105) {    //pickup
+                task.add(chosenItem);
+            } else if (task.get(0) == 106) {    //drop
+                task.add(chosenItem);
+            }  else  //else if (task.get(0) == 107) {    //use
+                System.out.println("How on earth...????");
+        }
+    }
+
+    private static void chooseElements() {
+        // 2 locations & 2 characters - 1 from each location
+        for (int i=0; i<2; i++){
+            chosenLocations.add(locations.get(random_method.nextInt(locations.size())));  //gets one random location
+            chosenCharacters.add(chosenLocations.get(chosenLocations.size()-1).getRandomCharacter());  //gets one random character from each location
+        }
+        chosenItem = items.get(random_method.nextInt()); //one random item
+    }
+
+
+
 
     /**
      * One method to evaluate quests
