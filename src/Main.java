@@ -1,4 +1,3 @@
-import java.util.Collections;
 import java.io.IOException;
 
 public class Main {
@@ -7,7 +6,7 @@ public class Main {
         RandomSearch random_execution = new RandomSearch();
         EvolutionarySearch evolutionary_execution = new EvolutionarySearch();
 
-
+        //RandomSearch.evoAlgorithm();
 
         //System.out.println("");
     }

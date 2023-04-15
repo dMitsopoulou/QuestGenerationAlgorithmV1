@@ -32,6 +32,11 @@ public class RandomSearch {
 
     public RandomSearch() {
         random_method = new Random();
+        actions = new ArrayList<>();
+        locations = new ArrayList<>();
+        items = new ArrayList<>();
+        readables = new ArrayList<>();
+        enemies = new ArrayList<>();
 
         actions.add(101);   //goto
         actions.add(102);   //talk to
@@ -86,6 +91,8 @@ public class RandomSearch {
         enemies.add(501);   //Super mutants
         enemies.add(502);   //Robots
         enemies.add(503);   //Feral ghouls
+
+        evoAlgorithm();
     }
 
     public static void evoAlgorithm(){
@@ -93,7 +100,10 @@ public class RandomSearch {
         parents = new ArrayList<>();
         fitness = new ArrayList<>();
         survivors = new ArrayList<>();
+        chosenCharacters = new ArrayList<>();
+        chosenLocations = new ArrayList<>();
 
+        initializePopulation();
 
     }
 
@@ -105,27 +115,47 @@ public class RandomSearch {
     public static void initializePopulation(){
         population = new ArrayList<>();
         for (int i=0; i< POPULATION_SIZE;i++){population.add(randomQuest());}    //make method to generate random quest
+        //System.out.println("heyyyy");
     }
 
+    /**
+     *  Makes a randomly generated quest
+     * @return the quest
+     */
     public static ArrayList<ArrayList<Integer>> randomQuest(){
-        ArrayList<Integer> task = new ArrayList<>();
+        ArrayList<Integer> task; //= new ArrayList<>();
         ArrayList<ArrayList<Integer>> quest = new ArrayList<>();
 
         //choose elements to use
         chooseElements();   //chooses locations, characters, and enemies to pop into the tasks
         //fill  quests with random actions in tasks
         for (int i=0; i< QUEST_SIZE;i++){
+            task = new ArrayList<>();
             task.add(actions.get(random_method.nextInt(actions.size())));  //adds action in the task
             quest.add(task);        //adds task to quest
-            task.clear();           //clears task
         }
+
+        /*
+        for (int i=0; i< QUEST_SIZE;i++){
+            //task = new ArrayList<>();
+            task.add(actions.get(random_method.nextInt(actions.size())));  //adds action in the task
+            quest.add(task);        //adds task to quest
+            //task.clear();           //clears task
+        }
+
+         */
         //populate tasks with chosen elements
         fillTasks(quest);
         //adds completed quest to population
         return quest;
     }
 
-    private static void fillTasks(ArrayList<ArrayList<Integer>> quest) {
+    /**
+     * Fills the tasks of the formulated quest based on the actions already in there
+     * @param quest the completed quest now populated with tasks
+     * @return quest the completed quest now populated with tasks
+     */
+    private static ArrayList<ArrayList<Integer>> fillTasks(ArrayList<ArrayList<Integer>> quest) {
         ArrayList<Integer> task;
         int currentLoc = 0;
         int currentChar;
@@ -174,9 +204,9 @@ public class RandomSearch {
                     }
                 }
             } else if (task.get(0) == 103) {    //fight
-                task.add(enemies.get(random_method.nextInt()));
+                task.add(enemies.get(random_method.nextInt(enemies.size())));
             } else if (task.get(0) == 104) {    //read
-                task.add(readables.get(random_method.nextInt()));
+                task.add(readables.get(random_method.nextInt(readables.size())));
             } else if (task.get(0) == 105) {    //pickup
                 task.add(chosenItem);
             } else if (task.get(0) == 106) {    //drop
@@ -184,15 +214,20 @@ public class RandomSearch {
             }  else  //else if (task.get(0) == 107) {    //use
                 System.out.println("How on earth...????");
         }
+
+        return quest;
     }
 
+    /**
+     * Chooses the elements to populate the actions with
+     */
     private static void chooseElements() {
         // 2 locations & 2 characters - 1 from each location
         for (int i=0; i<2; i++){
             chosenLocations.add(locations.get(random_method.nextInt(locations.size())));  //gets one random location
             chosenCharacters.add(chosenLocations.get(chosenLocations.size()-1).getRandomCharacter());  //gets one random character from each location
         }
-        chosenItem = items.get(random_method.nextInt()); //one random item
+        chosenItem = items.get(random_method.nextInt(items.size())); //one random item
     }
 
 

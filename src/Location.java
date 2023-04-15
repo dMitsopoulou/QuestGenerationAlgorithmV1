@@ -14,6 +14,7 @@ public class Location {
     static Random random_method;
 
    public Location(int num){
+       random_method = new Random();
        locationName = num;
        characters = new ArrayList<>();
        items = new ArrayList<>();
