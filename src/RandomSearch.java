@@ -5,6 +5,7 @@
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 
@@ -26,6 +27,7 @@ public class RandomSearch {
     static ArrayList<ArrayList<ArrayList<Integer>>> children;
     static ArrayList<ArrayList<ArrayList<Integer>>> parents;
     static ArrayList<Double> fitness;
+    static ArrayList<Double> taskAvg;
     static ArrayList<ArrayList<ArrayList<Integer>>> survivors;
 
 
@@ -54,6 +56,27 @@ public class RandomSearch {
         locations.add(new Location(205));
         locations.add(new Location(206));
 
+        items.add(301);
+        items.add(303);
+        items.add(306);
+        items.add(307);
+        items.add(308);
+
+        readables.add(302);
+        readables.add(304);
+        readables.add(305);
+
+        enemies.add(501);   //Super mutants
+        enemies.add(502);   //Robots
+        enemies.add(503);   //Feral ghouls
+
+        taskAvg.add(4.0);   //goto
+        taskAvg.add(2.0);   //talk to
+        taskAvg.add(3.0);   //fight
+        taskAvg.add(2.0);   //read
+        taskAvg.add(2.0);   //pickup
+        taskAvg.add(2.0);   //drop
+
 
 /*
         locations.add(201); //Novac
@@ -78,19 +101,7 @@ public class RandomSearch {
 
  */
 
-        items.add(301);
-        items.add(303);
-        items.add(306);
-        items.add(307);
-        items.add(308);
 
-        readables.add(302);
-        readables.add(304);
-        readables.add(305);
-
-        enemies.add(501);   //Super mutants
-        enemies.add(502);   //Robots
-        enemies.add(503);   //Feral ghouls
 
         evoAlgorithm();
     }
@@ -231,7 +242,30 @@ public class RandomSearch {
     }
 
 
+    /**
+     *
+     * @param forEval quest for evaluation
+     * @return evaluation
+     */
+    public static int evaluationFunction(ArrayList<ArrayList<Integer>> forEval) {
+        int fitness;
+        ArrayList<Integer> taskCounts = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 0));
+        for (ArrayList<Integer> candidate: forEval){
+           if( candidate.get(0) == 101) { taskCounts.add(0, taskCounts.get(0) + 1); //add 1 to count
+           } else if (candidate.get(0) == 102) { taskCounts.add(1, taskCounts.get(0) + 1);      //increment the corresponding element
+           } else if (candidate.get(0) == 103) { taskCounts.add(2, taskCounts.get(0) + 1);
+           } else if (candidate.get(0) == 104) { taskCounts.add(3, taskCounts.get(0) + 1);
+           } else if (candidate.get(0) == 105) { taskCounts.add(4, taskCounts.get(0) + 1);
+           } else if (candidate.get(0) == 106) { taskCounts.add(5, taskCounts.get(0) + 1);
+           } else System.out.println("houston we have a problem in task counting");
+        }
 
+        for (int i = 0; i<=taskCounts.size(); i++) {
+
+        }
+
+        return fitness;
+    }
 
     /**
      * One method to evaluate quests
