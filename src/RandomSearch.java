@@ -159,7 +159,7 @@ public class RandomSearch {
      * @return the quest
      */
     public static ArrayList<ArrayList<Integer>> randomQuest(){
-        ArrayList<Integer> task; //= new ArrayList<>();
+        ArrayList<Integer> task;
         ArrayList<ArrayList<Integer>> quest = new ArrayList<>();
 
         //choose elements to use
@@ -171,15 +171,6 @@ public class RandomSearch {
             quest.add(task);        //adds task to quest
         }
 
-        /*
-        for (int i=0; i< QUEST_SIZE;i++){
-            //task = new ArrayList<>();
-            task.add(actions.get(random_method.nextInt(actions.size())));  //adds action in the task
-            quest.add(task);        //adds task to quest
-            //task.clear();           //clears task
-        }
-
-         */
         //populate tasks with chosen elements
         fillTasks(quest);
         //adds completed quest to population
