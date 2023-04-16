@@ -11,6 +11,7 @@ import java.util.Random;
 
 public class RandomSearch {
 
+    static int GENERATION_NUMBER = 50;
     static int QUEST_SIZE = 12;
     static int POPULATION_SIZE = 20;
     static Random random_method;
@@ -29,6 +30,10 @@ public class RandomSearch {
     static ArrayList<Integer> fitness;
     static ArrayList<Integer> taskAvg;
     static ArrayList<ArrayList<ArrayList<Integer>>> survivors;
+
+    static int fitnessSum;
+    static int maxValue;
+    static int minValue;
 
 
     /**
@@ -112,6 +117,9 @@ public class RandomSearch {
      * Evolutionary algorithm main body
      */
     public static void evoAlgorithm(){
+
+        int currentGen = 1;
+
         children = new ArrayList<>();
         parents = new ArrayList<>();
         fitness = new ArrayList<>();
@@ -119,7 +127,19 @@ public class RandomSearch {
         chosenCharacters = new ArrayList<>();
         chosenLocations = new ArrayList<>();
 
-        initializePopulation();
+        while (currentGen < GENERATION_NUMBER){
+            initializePopulation();
+            fitnessFunction();
+
+            if (currentGen == 1){
+                maxValue = fitness.get(0);
+                minValue = fitness.get(0);
+                fitnessSum =0;
+            }
+            collectData();
+            currentGen++;
+        }
+
 
     }
 
@@ -357,10 +377,6 @@ public class RandomSearch {
         return fitness;
     }
 
-    /**
-     * One method to evaluate quests
-     * Runs fitness function on all quests of a list and puts it in a fitness list
-     */
 
     /**
      * One method for selection, probably tournament
@@ -388,10 +404,19 @@ public class RandomSearch {
      */
 
     /**
-     * For the purpose of collecting data, returns the generation number and the best fitness
-     *
-     * maybe only collect data of the best fitness at the end of the run
+     * Get Best, Average and worst values of fitness
      */
+    private static void collectData(){
+        for (Integer fitValue: fitness) {
+            fitnessSum =+ fitValue;
+            if(fitValue < minValue){
+                minValue = fitValue;
+            } else if (fitValue > maxValue) {
+                maxValue = fitValue;
+            } else System.out.println("Problem in data collecting");
+        }
+
+    }
 
 
     //take elements from v1 of salesman problem
