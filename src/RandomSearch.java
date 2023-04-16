@@ -26,12 +26,14 @@ public class RandomSearch {
     static ArrayList<ArrayList<ArrayList<Integer>>> population;
     static ArrayList<ArrayList<ArrayList<Integer>>> children;
     static ArrayList<ArrayList<ArrayList<Integer>>> parents;
-    static ArrayList<Double> fitness;
-    static ArrayList<Double> taskAvg;
+    static ArrayList<Integer> fitness;
+    static ArrayList<Integer> taskAvg;
     static ArrayList<ArrayList<ArrayList<Integer>>> survivors;
 
 
-
+    /**
+     * Constructor
+     */
     public RandomSearch() {
         random_method = new Random();
         actions = new ArrayList<>();
@@ -70,12 +72,12 @@ public class RandomSearch {
         enemies.add(502);   //Robots
         enemies.add(503);   //Feral ghouls
 
-        taskAvg.add(4.0);   //goto
-        taskAvg.add(2.0);   //talk to
-        taskAvg.add(3.0);   //fight
-        taskAvg.add(2.0);   //read
-        taskAvg.add(2.0);   //pickup
-        taskAvg.add(2.0);   //drop
+        taskAvg.add(4);   //goto
+        taskAvg.add(2);   //talk to
+        taskAvg.add(3);   //fight
+        taskAvg.add(2);   //read
+        taskAvg.add(2);   //pickup
+        taskAvg.add(2);   //drop
 
 
 /*
@@ -106,6 +108,9 @@ public class RandomSearch {
         evoAlgorithm();
     }
 
+    /**
+     * Evolutionary algorithm main body
+     */
     public static void evoAlgorithm(){
         children = new ArrayList<>();
         parents = new ArrayList<>();
@@ -243,13 +248,34 @@ public class RandomSearch {
 
 
     /**
-     *
+     * Fitness function
+     * puts the result for each quest on a fitness arrayList
+     */
+    public static void fitnessFunction(){
+        int theFit;
+        for (ArrayList<ArrayList<Integer>> quest : population) {
+            theFit = evaluateQuest(quest);
+            fitness.add(theFit);
+        }
+    }
+
+
+    /**
+     *  Evaluates a quest based on
+     *  <ul>
+     *      <li>Number of actions of each type</li>
+     *      <li>Whether there are chains of identical actions</li>
+     *      <li>Whether a drop comes before a pickup</li>
+     *  </ul>
+     *  When something undesirable is seen, there is a penalty on the fitness value of the quest
      * @param forEval quest for evaluation
      * @return evaluation
      */
-    public static int evaluationFunction(ArrayList<ArrayList<Integer>> forEval) {
-        int fitness;
+    public static int evaluateQuest(ArrayList<ArrayList<Integer>> forEval) {
+        int fitness = 0;
         ArrayList<Integer> taskCounts = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 0));
+
+        //counts number of tasks in whole quest
         for (ArrayList<Integer> candidate: forEval){
            if( candidate.get(0) == 101) { taskCounts.add(0, taskCounts.get(0) + 1); //add 1 to count
            } else if (candidate.get(0) == 102) { taskCounts.add(1, taskCounts.get(0) + 1);      //increment the corresponding element
@@ -259,10 +285,74 @@ public class RandomSearch {
            } else if (candidate.get(0) == 106) { taskCounts.add(5, taskCounts.get(0) + 1);
            } else System.out.println("houston we have a problem in task counting");
         }
-
-        for (int i = 0; i<=taskCounts.size(); i++) {
-
+        //penalise score if number of tasks is +-x different from expected
+        //+-2 for first 3, 0 for the last 3
+        for (int i = 0; i<=taskCounts.size(); i++) {    //taskAvg and task counts have the same sizes
+            if(i < 3 && Math.abs(taskCounts.get(i)-taskAvg.get(i)) > 2){
+              fitness = fitness + Math.abs(Math.abs(taskCounts.get(i)-taskAvg.get(i)) - 2) ;    //for every additional task of this kind beyond +-2, a point into fitness gets added
+           } else if (i > 3 && Math.abs(taskCounts.get(i)-taskAvg.get(i)) > 0) {
+                fitness = fitness + Math.abs(taskCounts.get(i)-taskAvg.get(i)) ;
+            } else System.out.println("Something's going on in absolute calculation");
         }
+
+        //calculate streak of continuous tasks
+        fitness = longestChain(forEval, fitness);
+
+
+        int pickup = -1;
+        int drop = -1;
+        // is there a drop before a pickup?
+        for (ArrayList<Integer> task : forEval) {
+            if (pickup == -1 || drop == -1) {
+                if (task.get(0) == 105) {
+                    pickup = forEval.indexOf(task);
+                } else if (task.get(0) == 106) {
+                    drop = forEval.indexOf(task);
+                } else System.out.println("Fatal error in drop / pickup tracking");
+            } else break;
+        }
+        if (drop < pickup){
+           fitness =  fitness + Math.abs(drop-pickup);
+        } else System.out.println("error in drop/ pickup fitness calculation");
+
+
+        return fitness;
+    }
+
+    /**
+     * Checks the quest for streaks of actions
+     * @param forEval quest to be evaluated
+     * @param fitness fitness value after checking for streaks of actions
+     * @return
+     */
+    private static int longestChain(ArrayList<ArrayList<Integer>> forEval, int fitness ) {
+        ArrayList<Integer> max = new ArrayList<>(Arrays.asList(0,0,0,0,0,0));
+        //for each task in quest
+
+        for (int i = 0; i < forEval.size(); i++) {
+            int count = 0;
+            int actionA = forEval.get(i).get(0);
+
+            for (int j = i; j < forEval.size(); j++) {
+                int actionB = forEval.get(i).get(0);
+                //now find out what kind of action it is
+                if (actionA == actionB) { count++;
+                } else break;
+            }
+            //when done counting, exit inner loop and compare action streak against existing
+            if (actionA == 101 && count > max.get(0)){ max.add(0, count);
+            } else if (actionA == 102 && count > max.get(1)) { max.add(1, count);
+            } else if (actionA == 103 && count > max.get(2)) { max.add(2, count);
+            } else if (actionA == 104 && count > max.get(3)) { max.add(3, count);
+            } else if (actionA == 105 && count > max.get(4)) { max.add(4, count);
+            } else if (actionA == 106 && count > max.get(5)) { max.add(5, count);
+            } else System.out.println("something wrong in streak counting");
+        }
+
+        //no streaks are allowed, except fight & read
+        // for every extra action, beyond 1, add 1 to the fitness
+        fitness = fitness + max.get(0) + max.get(1) + max.get(4) + max.get(5) - 4;
+
 
         return fitness;
     }
