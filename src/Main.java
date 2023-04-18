@@ -4,7 +4,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         RandomSearch random_execution = new RandomSearch();
-        EvolutionarySearch evolutionary_execution = new EvolutionarySearch();
+        //EvolutionarySearch evolutionary_execution = new EvolutionarySearch();
 
         //RandomSearch.evoAlgorithm();
 

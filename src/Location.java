@@ -10,14 +10,14 @@ public class Location {
 
     int locationName;
     static ArrayList<Integer> characters;
-    static ArrayList<Integer> items;
+    //static ArrayList<Integer> items;
     static Random random_method;
 
    public Location(int num){
        random_method = new Random();
        locationName = num;
        characters = new ArrayList<>();
-       items = new ArrayList<>();
+       //items = new ArrayList<>();
        //String nums = Integer.toString(num);
        if( num == 201){
            characters.add(2011);
@@ -40,14 +40,23 @@ public class Location {
        } else {
            System.out.println("how did you manage that");
        }
+       printContents();
 
    }
 
    //returns random character
-   public int getRandomCharacter(){
-       return characters.get(random_method.nextInt(characters.size()));
+   public ArrayList<Integer> getCharacters(){
+       return characters;
    }
    public int getLocationName(){
        return locationName;
+   }
+
+   private void printContents(){
+       System.out.println(locationName);
+       for (Integer character: characters) {
+           System.out.println(character);
+
+       }
    }
 }

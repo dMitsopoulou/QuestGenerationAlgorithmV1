@@ -6,6 +6,7 @@
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 
 
@@ -13,15 +14,15 @@ public class RandomSearch {
 
     static int GENERATION_NUMBER = 50;
     static int QUEST_SIZE = 12;
-    static int POPULATION_SIZE = 20;
+    static int POPULATION_SIZE = 100;
     static Random random_method;
     static ArrayList<Integer> actions;
-    static ArrayList<Location> locations;
-    static ArrayList<Integer> characters;
+    static ArrayList<Integer> locations;
+    static ArrayList<ArrayList<Integer>> characters;
     static ArrayList<Integer> items;
     static ArrayList<Integer> enemies;
     static ArrayList<Integer> readables;
-    static ArrayList<Location> chosenLocations;
+    static ArrayList<Integer> chosenLocations;
     static ArrayList<Integer> chosenCharacters;
     static int chosenItem;
     static ArrayList<ArrayList<ArrayList<Integer>>> population;
@@ -30,7 +31,6 @@ public class RandomSearch {
     static ArrayList<Integer> fitness;
     static ArrayList<Integer> taskAvg;
     static ArrayList<ArrayList<ArrayList<Integer>>> survivors;
-
     static int fitnessSum;
     static int maxValue;
     static int minValue;
@@ -43,9 +43,11 @@ public class RandomSearch {
         random_method = new Random();
         actions = new ArrayList<>();
         locations = new ArrayList<>();
+        characters = new ArrayList<>();
         items = new ArrayList<>();
         readables = new ArrayList<>();
         enemies = new ArrayList<>();
+        taskAvg = new ArrayList<>(Arrays.asList(4,2,3,2,2,2));
 
         actions.add(101);   //goto
         actions.add(102);   //talk to
@@ -54,14 +56,6 @@ public class RandomSearch {
         actions.add(105);   //pickup
         actions.add(106);   //drop
         //actions.add(107);   //use
-
-        //change to key - value pair map when you can
-        locations.add(new Location(201));
-        locations.add(new Location(202));
-        locations.add(new Location(203));
-        locations.add(new Location(204));
-        locations.add(new Location(205));
-        locations.add(new Location(206));
 
         items.add(301);
         items.add(303);
@@ -77,15 +71,8 @@ public class RandomSearch {
         enemies.add(502);   //Robots
         enemies.add(503);   //Feral ghouls
 
-        taskAvg.add(4);   //goto
-        taskAvg.add(2);   //talk to
-        taskAvg.add(3);   //fight
-        taskAvg.add(2);   //read
-        taskAvg.add(2);   //pickup
-        taskAvg.add(2);   //drop
 
 
-/*
         locations.add(201); //Novac
         locations.add(202); //Goodsprings
         locations.add(203); //Camp McCarran
@@ -93,20 +80,19 @@ public class RandomSearch {
         locations.add(205); //Jacobstown
         locations.add(206); //Nellis AFB
 
-        characters.add(11);
-        characters.add(12);
-        characters.add(21);
-        characters.add(22);
-        characters.add(31);
-        characters.add(32);
-        characters.add(41);
-        characters.add(42);
-        characters.add(51);
-        characters.add(52);
-        characters.add(61);
-        characters.add(62);
 
- */
+
+        characters.add((new ArrayList<Integer>(Arrays.asList(2011, 2012)))); //one list for the chars of each location
+        characters.add((new ArrayList<Integer>(Arrays.asList(2021, 2022))));
+        characters.add((new ArrayList<Integer>(Arrays.asList(2031, 2032))));
+        characters.add((new ArrayList<Integer>(Arrays.asList(2041, 2042))));
+        characters.add((new ArrayList<Integer>(Arrays.asList(2051, 2052))));
+        characters.add((new ArrayList<Integer>(Arrays.asList(2061, 2062))));
+
+
+
+
+
 
 
 
@@ -117,7 +103,6 @@ public class RandomSearch {
      * Evolutionary algorithm main body
      */
     public static void evoAlgorithm(){
-
         int currentGen = 1;
 
         children = new ArrayList<>();
@@ -127,18 +112,29 @@ public class RandomSearch {
         chosenCharacters = new ArrayList<>();
         chosenLocations = new ArrayList<>();
 
-        while (currentGen < GENERATION_NUMBER){
+
+        //choose elements to use
+        chooseElements();   //chooses locations, characters, and enemies to pop into the tasks
+        //choose elements is here in random search bc we only want elements to be chosen once in each run
+
+        while (currentGen <= GENERATION_NUMBER){
+            System.out.println("Current generation: " + currentGen);
             initializePopulation();
             fitnessFunction();
 
             if (currentGen == 1){
-                maxValue = fitness.get(0);
-                minValue = fitness.get(0);
+                maxValue = fitness.get(20);
+                minValue = fitness.get(20);
                 fitnessSum =0;
             }
             collectData();
+            nextGenSetup();
             currentGen++;
+
         }
+        int fitnessAvg = fitnessSum / (GENERATION_NUMBER * POPULATION_SIZE);
+
+        System.out.println("Minimum fitness:" + minValue + "Maximum fitness:" + maxValue + "Average:" +fitnessAvg);
 
 
     }
@@ -150,8 +146,10 @@ public class RandomSearch {
      */
     public static void initializePopulation(){
         population = new ArrayList<>();
+
+
+
         for (int i=0; i< POPULATION_SIZE;i++){population.add(randomQuest());}    //make method to generate random quest
-        //System.out.println("heyyyy");
     }
 
     /**
@@ -162,8 +160,7 @@ public class RandomSearch {
         ArrayList<Integer> task;
         ArrayList<ArrayList<Integer>> quest = new ArrayList<>();
 
-        //choose elements to use
-        chooseElements();   //chooses locations, characters, and enemies to pop into the tasks
+
         //fill  quests with random actions in tasks
         for (int i=0; i< QUEST_SIZE;i++){
             task = new ArrayList<>();
@@ -179,10 +176,10 @@ public class RandomSearch {
 
     /**
      * Fills the tasks of the formulated quest based on the actions already in there
+     *
      * @param quest the completed quest now populated with tasks
-     * @return quest the completed quest now populated with tasks
      */
-    private static ArrayList<ArrayList<Integer>> fillTasks(ArrayList<ArrayList<Integer>> quest) {
+    private static void fillTasks(ArrayList<ArrayList<Integer>> quest) {
         ArrayList<Integer> task;
         int currentLoc = 0;
         int currentChar;
@@ -192,21 +189,15 @@ public class RandomSearch {
 
             if (task.get(0) == 101){    //goto
                 //go to a location you are not already in
-                for (Location loc : chosenLocations) {
-                   if(loc.getLocationName() != currentLoc) {    //if this is not current location, go to that
-                       task.add(loc.getLocationName());
+                for (Integer loc : chosenLocations) {
+                   if(loc != currentLoc) {    //if this is not current location, go to that
+                       task.add(loc);
                        break;
                    }
                 }
-                /*
-                Location loc = chosenLocations.get(random_method.nextInt(locations.size()));
-                task.add(loc.getLocationName());
-                currentLoc = loc.getLocationName(); //saves the last location used, as the player is supposed to be at that location now
-
-                 */
             } else if (task.get(0) == 102) {    //talk to
-                // go find a character that is in the last location
-                if (currentLoc == 0){            //if a location task has not come beforehand, find random character
+                // go find a character that is in the current location
+                if (currentLoc == 0){           //if a location task has not come beforehand, find random character
                     currentChar = chosenCharacters.get(random_method.nextInt(chosenCharacters.size()));
                     task.add(currentChar);      //add character to task
 
@@ -215,13 +206,15 @@ public class RandomSearch {
 
                 } else {        //a location has come right before, get a character from that specific location
                    String charToLoc;
-                    /*for (Location loc : chosenLocations){
-                        if(currentLoc == loc.getLocationName()){
+                    /*for (Integer loc : chosenLocations){
+                        if(currentLoc == loc){
 
                         }
                     }
 
                      */
+
+
                     for (int character: chosenCharacters) {     //access chosen characters and fetch one with the desired location name
                        charToLoc = String.valueOf(character).substring(0, 3);
                        if(currentLoc == Integer.parseInt(charToLoc)){
@@ -238,11 +231,10 @@ public class RandomSearch {
                 task.add(chosenItem);
             } else if (task.get(0) == 106) {    //drop
                 task.add(chosenItem);
-            }  else  //else if (task.get(0) == 107) {    //use
-                System.out.println("How on earth...????");
+            }
+                //System.out.println("How on earth...????");
         }
 
-        return quest;
     }
 
     /**
@@ -252,8 +244,23 @@ public class RandomSearch {
         // 2 locations & 2 characters - 1 from each location
         for (int i=0; i<2; i++){
             chosenLocations.add(locations.get(random_method.nextInt(locations.size())));  //gets one random location
-            chosenCharacters.add(chosenLocations.get(chosenLocations.size()-1).getRandomCharacter());  //gets one random character from each location
+
         }
+        while (Objects.equals(chosenLocations.get(0), chosenLocations.get(1))){
+            chosenLocations.set(0, locations.get(random_method.nextInt(locations.size())));  //find another location for index 0
+        }
+
+        for (int i=0; i<chosenLocations.size(); i++){
+            if (chosenLocations.get(i) == 201){chosenCharacters.add(characters.get(0).get(random_method.nextInt(characters.get(0).size()))); //get one character from location
+            } else if (chosenLocations.get(i) == 202) { chosenCharacters.add(characters.get(1).get(random_method.nextInt(characters.get(1).size())));
+            } else if (chosenLocations.get(i) == 203) { chosenCharacters.add(characters.get(2).get(random_method.nextInt(characters.get(2).size())));
+            } else if (chosenLocations.get(i) == 204) { chosenCharacters.add(characters.get(3).get(random_method.nextInt(characters.get(3).size())));
+            } else if (chosenLocations.get(i) == 205) { chosenCharacters.add(characters.get(4).get(random_method.nextInt(characters.get(4).size())));
+            } else if (chosenLocations.get(i) == 206) { chosenCharacters.add(characters.get(5).get(random_method.nextInt(characters.get(5).size())));
+            } else System.out.println("now that is not a location");
+
+        }
+
         chosenItem = items.get(random_method.nextInt(items.size())); //one random item
     }
 
@@ -288,22 +295,22 @@ public class RandomSearch {
 
         //counts number of tasks in whole quest
         for (ArrayList<Integer> candidate: forEval){
-           if( candidate.get(0) == 101) { taskCounts.add(0, taskCounts.get(0) + 1); //add 1 to count
-           } else if (candidate.get(0) == 102) { taskCounts.add(1, taskCounts.get(0) + 1);      //increment the corresponding element
-           } else if (candidate.get(0) == 103) { taskCounts.add(2, taskCounts.get(0) + 1);
-           } else if (candidate.get(0) == 104) { taskCounts.add(3, taskCounts.get(0) + 1);
-           } else if (candidate.get(0) == 105) { taskCounts.add(4, taskCounts.get(0) + 1);
-           } else if (candidate.get(0) == 106) { taskCounts.add(5, taskCounts.get(0) + 1);
+           if( candidate.get(0) == 101) { taskCounts.set(0, taskCounts.get(0) + 1); //add 1 to count
+           } else if (candidate.get(0) == 102) { taskCounts.set(1, taskCounts.get(1) + 1);      //increment the corresponding element
+           } else if (candidate.get(0) == 103) { taskCounts.set(2, taskCounts.get(2) + 1);
+           } else if (candidate.get(0) == 104) { taskCounts.set(3, taskCounts.get(3) + 1);
+           } else if (candidate.get(0) == 105) { taskCounts.set(4, taskCounts.get(4) + 1);
+           } else if (candidate.get(0) == 106) { taskCounts.set(5, taskCounts.get(5) + 1);
            } else System.out.println("houston we have a problem in task counting");
         }
         //penalise score if number of tasks is +-x different from expected
         //+-2 for first 3, 0 for the last 3
-        for (int i = 0; i<=taskCounts.size(); i++) {    //taskAvg and task counts have the same sizes
+        for (int i = 0; i < taskCounts.size(); i++) {    //taskAvg and task counts have the same sizes
             if(i < 3 && Math.abs(taskCounts.get(i)-taskAvg.get(i)) > 2){
               fitness = fitness + Math.abs(Math.abs(taskCounts.get(i)-taskAvg.get(i)) - 2) ;    //for every additional task of this kind beyond +-2, a point into fitness gets added
            } else if (i > 3 && Math.abs(taskCounts.get(i)-taskAvg.get(i)) > 0) {
                 fitness = fitness + Math.abs(taskCounts.get(i)-taskAvg.get(i)) ;
-            } else System.out.println("Something's going on in absolute calculation");
+            } else System.out.println("case with normal task counts");
         }
 
         //calculate streak of continuous tasks
@@ -319,12 +326,12 @@ public class RandomSearch {
                     pickup = forEval.indexOf(task);
                 } else if (task.get(0) == 106) {
                     drop = forEval.indexOf(task);
-                } else System.out.println("Fatal error in drop / pickup tracking");
+                } else System.out.println("action we don't care about in pickup tracking");
             } else break;
         }
         if (drop < pickup){
            fitness =  fitness + Math.abs(drop-pickup);
-        } else System.out.println("error in drop/ pickup fitness calculation");
+        } else System.out.println("drop comes after pickup, all good!");
 
 
         return fitness;
@@ -350,14 +357,14 @@ public class RandomSearch {
                 if (actionA == actionB) { count++;
                 } else break;
             }
-            //when done counting, exit inner loop and compare action streak against existing
+            //when done counting elements of current streak, exit inner loop and compare action streak against existing
             if (actionA == 101 && count > max.get(0)){ max.add(0, count);
             } else if (actionA == 102 && count > max.get(1)) { max.add(1, count);
             } else if (actionA == 103 && count > max.get(2)) { max.add(2, count);
             } else if (actionA == 104 && count > max.get(3)) { max.add(3, count);
             } else if (actionA == 105 && count > max.get(4)) { max.add(4, count);
             } else if (actionA == 106 && count > max.get(5)) { max.add(5, count);
-            } else System.out.println("something wrong in streak counting");
+            } else System.out.println("streak count not changed");
         }
 
         //no streaks are allowed, except fight & read
@@ -393,19 +400,51 @@ public class RandomSearch {
     /**
      * Sets up new generation
      */
+    public static void nextGenSetup(){
+        //survivors are the new population
+        population.clear();
+        //population.addAll(survivors); new population will be created randomly upon new iteration
+
+        fitness.clear();
+        //evaluation(survivors, fitness); //evaluates new population
+
+        //empty arrays
+        parents.clear();
+        children.clear();
+        survivors.clear();
+        chosenCharacters.clear();
+        chosenLocations.clear();
+        //chosenItem = null;
+
+    }
 
     /**
      * Get Best, Average and worst values of fitness
      */
     private static void collectData(){
+        for (int i=0; i< fitness.size(); i++){
+           fitnessSum = fitnessSum + fitness.get(i);
+
+           if(fitness.get(i) < minValue) {
+               minValue = fitness.get(i);
+           } else if (fitness.get(i) > maxValue){
+               maxValue = fitness.get(i);
+           }
+
+        }
+
+        /*
         for (Integer fitValue: fitness) {
             fitnessSum =+ fitValue;
             if(fitValue < minValue){
                 minValue = fitValue;
             } else if (fitValue > maxValue) {
                 maxValue = fitValue;
-            } else System.out.println("Problem in data collecting");
+            } else if (fitValue == maxValue ||fitValue== minValue)
+                System.out.println("equal values");
         }
+
+         */
 
     }
 

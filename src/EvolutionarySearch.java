@@ -46,6 +46,7 @@ public class EvolutionarySearch {
         items = new ArrayList<>();
         readables = new ArrayList<>();
         enemies = new ArrayList<>();
+        taskAvg = new ArrayList<>(Arrays.asList(4,2,3,2,2,2));
 
         actions.add(101);   //goto
         actions.add(102);   //talk to
@@ -53,7 +54,7 @@ public class EvolutionarySearch {
         actions.add(104);   //Read
         actions.add(105);   //pickup
         actions.add(106);   //drop
-        //actions.add(107);   //use
+
 
         //change to key - value pair map when you can
         locations.add(new Location(201));
@@ -76,14 +77,6 @@ public class EvolutionarySearch {
         enemies.add(501);   //Super mutants
         enemies.add(502);   //Robots
         enemies.add(503);   //Feral ghouls
-
-        taskAvg.add(4);   //goto
-        taskAvg.add(2);   //talk to
-        taskAvg.add(3);   //fight
-        taskAvg.add(2);   //read
-        taskAvg.add(2);   //pickup
-        taskAvg.add(2);   //drop
-
 
 
         evoAlgorithm();
@@ -127,7 +120,6 @@ public class EvolutionarySearch {
     public static void initializePopulation(){
         population = new ArrayList<>();
         for (int i=0; i< POPULATION_SIZE;i++){population.add(randomQuest());}    //make method to generate random quest
-        //System.out.println("heyyyy");
     }
 
     /**
@@ -229,7 +221,7 @@ public class EvolutionarySearch {
         // 2 locations & 2 characters - 1 from each location
         for (int i=0; i<2; i++){
             chosenLocations.add(locations.get(random_method.nextInt(locations.size())));  //gets one random location
-            chosenCharacters.add(chosenLocations.get(chosenLocations.size()-1).getRandomCharacter());  //gets one random character from each location
+            //chosenCharacters.add(chosenLocations.get(chosenLocations.size()-1).getRandomCharacter());  //gets one random character from each location
         }
         chosenItem = items.get(random_method.nextInt(items.size())); //one random item
     }
@@ -388,7 +380,8 @@ public class EvolutionarySearch {
                 minValue = fitValue;
             } else if (fitValue > maxValue) {
                 maxValue = fitValue;
-            } else System.out.println("Problem in data collecting");
+            } else if (fitValue == maxValue ||fitValue== minValue)
+                System.out.println("equal values");
         }
 
     }
