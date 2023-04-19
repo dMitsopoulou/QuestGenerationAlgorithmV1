@@ -4,11 +4,7 @@
  * @version 1.0
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Objects;
-
+import java.util.*;
 
 
 public class EvolutionarySearch {
@@ -29,6 +25,8 @@ public class EvolutionarySearch {
     static int chosenItem;
     static ArrayList<ArrayList<ArrayList<Integer>>> population;
     static ArrayList<ArrayList<ArrayList<Integer>>> children;
+    static ArrayList<ArrayList<ArrayList<Integer>>> candidates;
+    static ArrayList<Integer> candidateFitness;
     static ArrayList<ArrayList<ArrayList<Integer>>> parents;
     static ArrayList<Integer> fitness;
     static ArrayList<Integer> taskAvg;
@@ -113,18 +111,25 @@ public class EvolutionarySearch {
         //testQuests(); //test quests for fitness
         //evaluateQuest(randomQuest());     //test randomly generated quest for fitness
 
-
+        initializePopulation();
+        fitnessFunction();
 
         while (currentGen <= GENERATION_NUMBER){
             System.out.println("Current generation: " + currentGen);
-            initializePopulation();
-            fitnessFunction();
 
             if (currentGen == 1){
                 maxValue = fitness.get(20);
                 minValue = fitness.get(20);
                 fitnessSum =0;
             }
+            tournamentSelection(3,50);
+            int pairsOfChildren = 50; //input half the number of children required 50*2=100 children
+            for(int i =1; i<=pairsOfChildren;i++){
+                //produces two children
+                recombination();
+            }
+
+
             collectData();
             nextGenSetup();
             currentGen++;
@@ -135,6 +140,8 @@ public class EvolutionarySearch {
         System.out.println("Minimum fitness:" + minValue + "Maximum fitness:" + maxValue + "Average:" +fitnessAvg);
 
     }
+
+
 
     /**
      * Insert human authored quests for testing fitness
@@ -399,14 +406,72 @@ public class EvolutionarySearch {
 
 
     /**
-     * One method for selection, probably tournament
-     * Picks out random quests and chooses the best one to be potential parent
+     * Picks out random tours and chooses the best one to be potential parent
+     * Result is in parents ArrayList
+     * @param tournamentSize the size of each tournament
+     * @param parentSize the final number of parents
      */
+    public static void tournamentSelection(int tournamentSize, int parentSize){
+        candidates = new ArrayList<>(); //candidates that will compete
+        candidateFitness = new ArrayList<>();
+        int randNum;
+        int bestFitness;
+        ArrayList<ArrayList<Integer>> bestCandidate;
+
+        for(int j=0; j<parentSize;j++) {
+            //fill up tournament candidate arrayList
+            for (int i = 0; i < tournamentSize; i++) {
+                randNum = random_method.nextInt(population.size());
+                //get random candidates and their fitness
+                candidates.add(population.get(randNum));
+                candidateFitness.add(fitness.get(randNum)); //ATTENTION
+            }
+            // select parent out of that arrayList
+            bestCandidate = candidates.get(1);
+            bestFitness = candidateFitness.get(1);
+
+            for (int i = 0; i < candidateFitness.size(); i++) {
+                if (candidateFitness.get(i) < bestFitness) { //minimising fitness
+                    bestFitness = candidateFitness.get(i);
+                    bestCandidate = candidates.get(i);
+                }
+            }
+            parents.add(bestCandidate); //adds the best one as a parent
+
+            //delete all entries in arrayLists
+            candidates.clear();
+            candidateFitness.clear();
+        }
+    }
 
     /**
      * one method to produce the children from the parents selected above
      * Produces two children by Crossing over two parents
      */
+    private static void recombination() {
+        ArrayList<ArrayList<Integer>> child1 = new ArrayList<>();
+        ArrayList<ArrayList<Integer>> child2 = new ArrayList<>();
+
+        //array is 2 cells long
+        Collections.shuffle(parents);
+
+        int cut = random_method.nextInt(parents.get(0).size()-1);
+
+        //first part of child one
+        for (int i = 0; i<=cut; i++) { child1.add(parents.get(0).get(i));}
+
+        //first part of child 2
+        for (int i = 0; i<=cut; i++) { child2.add(parents.get(1).get(i)); }
+
+        //second part of child one
+        for (int i = cut+1; i < parents.get(1).size(); i++){ child1.add(parents.get(1).get(i)); }
+
+        //second part of child 2
+        for (int i = cut+1; i < parents.get(0).size(); i++){ child2.add(parents.get(0).get(i)); }
+
+        children.add(child1);
+        children.add(child2);
+    }
 
     /**
      * Method for mutation
