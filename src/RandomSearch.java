@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 
-
 public class RandomSearch {
 
     static int GENERATION_NUMBER = 50;
@@ -71,8 +70,6 @@ public class RandomSearch {
         enemies.add(502);   //Robots
         enemies.add(503);   //Feral ghouls
 
-
-
         locations.add(201); //Novac
         locations.add(202); //Goodsprings
         locations.add(203); //Camp McCarran
@@ -80,21 +77,12 @@ public class RandomSearch {
         locations.add(205); //Jacobstown
         locations.add(206); //Nellis AFB
 
-
-
         characters.add((new ArrayList<Integer>(Arrays.asList(2011, 2012)))); //one list for the chars of each location
         characters.add((new ArrayList<Integer>(Arrays.asList(2021, 2022))));
         characters.add((new ArrayList<Integer>(Arrays.asList(2031, 2032))));
         characters.add((new ArrayList<Integer>(Arrays.asList(2041, 2042))));
         characters.add((new ArrayList<Integer>(Arrays.asList(2051, 2052))));
         characters.add((new ArrayList<Integer>(Arrays.asList(2061, 2062))));
-
-
-
-
-
-
-
 
         evoAlgorithm();
     }
@@ -117,6 +105,11 @@ public class RandomSearch {
         chooseElements();   //chooses locations, characters, and enemies to pop into the tasks
         //choose elements is here in random search bc we only want elements to be chosen once in each run
 
+        //testQuests(); //test quests for fitness
+        //evaluateQuest(randomQuest());     //test randomly generated quest for fitness
+
+
+
         while (currentGen <= GENERATION_NUMBER){
             System.out.println("Current generation: " + currentGen);
             initializePopulation();
@@ -136,22 +129,44 @@ public class RandomSearch {
 
         System.out.println("Minimum fitness:" + minValue + "Maximum fitness:" + maxValue + "Average:" +fitnessAvg);
 
+    }
+
+    /**
+     * Insert human authored quests for testing fitness
+     */
+    private static void testQuests() {
+        ArrayList<ArrayList<Integer>> testQuest1 = new ArrayList<>();
+        //ArrayList<ArrayList<Integer>> testQuest2 = new ArrayList<>();
+
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(104, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(106, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(102, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(101, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(102, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(106, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(104, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(105, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(101, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(101, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(106, 304))));
+        testQuest1.add((new ArrayList<Integer>(Arrays.asList(105, 304))));
+
+        evaluateQuest(testQuest1);
 
     }
 
 
+    //TESTED
     /**
      * one method to initialise the population randomly
      * Creates Population out of random quests
      */
     public static void initializePopulation(){
         population = new ArrayList<>();
-
-
-
         for (int i=0; i< POPULATION_SIZE;i++){population.add(randomQuest());}    //make method to generate random quest
     }
 
+    //TESTED
     /**
      *  Makes a randomly generated quest
      * @return the quest
@@ -160,20 +175,19 @@ public class RandomSearch {
         ArrayList<Integer> task;
         ArrayList<ArrayList<Integer>> quest = new ArrayList<>();
 
-
         //fill  quests with random actions in tasks
         for (int i=0; i< QUEST_SIZE;i++){
             task = new ArrayList<>();
             task.add(actions.get(random_method.nextInt(actions.size())));  //adds action in the task
             quest.add(task);        //adds task to quest
         }
-
         //populate tasks with chosen elements
         fillTasks(quest);
         //adds completed quest to population
         return quest;
     }
 
+    //TESTED
     /**
      * Fills the tasks of the formulated quest based on the actions already in there
      *
@@ -192,6 +206,7 @@ public class RandomSearch {
                 for (Integer loc : chosenLocations) {
                    if(loc != currentLoc) {    //if this is not current location, go to that
                        task.add(loc);
+                       currentLoc= loc;
                        break;
                    }
                 }
@@ -206,14 +221,6 @@ public class RandomSearch {
 
                 } else {        //a location has come right before, get a character from that specific location
                    String charToLoc;
-                    /*for (Integer loc : chosenLocations){
-                        if(currentLoc == loc){
-
-                        }
-                    }
-
-                     */
-
 
                     for (int character: chosenCharacters) {     //access chosen characters and fetch one with the desired location name
                        charToLoc = String.valueOf(character).substring(0, 3);
@@ -231,12 +238,11 @@ public class RandomSearch {
                 task.add(chosenItem);
             } else if (task.get(0) == 106) {    //drop
                 task.add(chosenItem);
-            }
-                //System.out.println("How on earth...????");
+            } //System.out.println("How on earth...????");
         }
-
     }
 
+    //TESTED
     /**
      * Chooses the elements to populate the actions with
      */
@@ -264,7 +270,7 @@ public class RandomSearch {
         chosenItem = items.get(random_method.nextInt(items.size())); //one random item
     }
 
-
+    //TESTED
     /**
      * Fitness function
      * puts the result for each quest on a fitness arrayList
@@ -275,9 +281,10 @@ public class RandomSearch {
             theFit = evaluateQuest(quest);
             fitness.add(theFit);
         }
+        //System.out.println(theFit);
     }
 
-
+    //TESTED
     /**
      *  Evaluates a quest based on
      *  <ul>
@@ -312,10 +319,8 @@ public class RandomSearch {
                 fitness = fitness + Math.abs(taskCounts.get(i)-taskAvg.get(i)) ;
             } else System.out.println("case with normal task counts");
         }
-
         //calculate streak of continuous tasks
         fitness = longestChain(forEval, fitness);
-
 
         int pickup = -1;
         int drop = -1;
@@ -329,14 +334,21 @@ public class RandomSearch {
                 } else System.out.println("action we don't care about in pickup tracking");
             } else break;
         }
-        if (drop < pickup){
-           fitness =  fitness + Math.abs(drop-pickup);
-        } else System.out.println("drop comes after pickup, all good!");
+         if(pickup == -1 && drop!=-1){
+             //there is no pickup, have to penalise nonetheless
+             fitness =  fitness + Math.abs(drop-1);
+         } else if (pickup != -1 && drop == -1) {
+             //player picks up somthing but never drops it, no need to penalise
+             System.out.println("player picks up somthing but never drops it, no need to penalise");
+         } else if (drop < pickup) {
+             fitness =  fitness + Math.abs(drop-(pickup+1));
+         } else System.out.println("drop comes after pickup, all good!");
 
-
+        //System.out.println(fitness);
         return fitness;
     }
 
+    //TESTED
     /**
      * Checks the quest for streaks of actions
      * @param forEval quest to be evaluated
@@ -352,25 +364,37 @@ public class RandomSearch {
             int actionA = forEval.get(i).get(0);
 
             for (int j = i; j < forEval.size(); j++) {
-                int actionB = forEval.get(i).get(0);
+                int actionB = forEval.get(j).get(0);
                 //now find out what kind of action it is
                 if (actionA == actionB) { count++;
                 } else break;
             }
             //when done counting elements of current streak, exit inner loop and compare action streak against existing
             if (actionA == 101 && count > max.get(0)){ max.add(0, count);
-            } else if (actionA == 102 && count > max.get(1)) { max.add(1, count);
-            } else if (actionA == 103 && count > max.get(2)) { max.add(2, count);
-            } else if (actionA == 104 && count > max.get(3)) { max.add(3, count);
-            } else if (actionA == 105 && count > max.get(4)) { max.add(4, count);
-            } else if (actionA == 106 && count > max.get(5)) { max.add(5, count);
+            } else if (actionA == 102 && count > max.get(1)) { max.set(1, count);
+            } else if (actionA == 103 && count > max.get(2)) { max.set(2, count);
+            } else if (actionA == 104 && count > max.get(3)) { max.set(3, count);
+            } else if (actionA == 105 && count > max.get(4)) { max.set(4, count);
+            } else if (actionA == 106 && count > max.get(5)) { max.set(5, count);
             } else System.out.println("streak count not changed");
         }
 
         //no streaks are allowed, except fight & read
         // for every extra action, beyond 1, add 1 to the fitness
-        fitness = fitness + max.get(0) + max.get(1) + max.get(4) + max.get(5) - 4;
+        if(max.get(0)>= 1){
+            max.set(0, max.get(0)-1);
+        }
+        if(max.get(1)>= 1){
+            max.set(1, max.get(1)-1);
+        }
+        if(max.get(4)>= 1){
+            max.set(4, max.get(4)-1);
+        }
+        if(max.get(5)>= 1){
+            max.set(5, max.get(5)-1);
+        }
 
+        fitness = fitness + max.get(0) + max.get(1) + max.get(4) + max.get(5);
 
         return fitness;
     }
@@ -397,6 +421,7 @@ public class RandomSearch {
      * in this instance, the population will be remade
      */
 
+    //TESTED
     /**
      * Sets up new generation
      */
@@ -412,12 +437,13 @@ public class RandomSearch {
         parents.clear();
         children.clear();
         survivors.clear();
-        chosenCharacters.clear();
+        //chosenCharacters.clear();
         chosenLocations.clear();
         //chosenItem = null;
 
     }
 
+    //TESTED
     /**
      * Get Best, Average and worst values of fitness
      */
@@ -430,24 +456,7 @@ public class RandomSearch {
            } else if (fitness.get(i) > maxValue){
                maxValue = fitness.get(i);
            }
-
         }
-
-        /*
-        for (Integer fitValue: fitness) {
-            fitnessSum =+ fitValue;
-            if(fitValue < minValue){
-                minValue = fitValue;
-            } else if (fitValue > maxValue) {
-                maxValue = fitValue;
-            } else if (fitValue == maxValue ||fitValue== minValue)
-                System.out.println("equal values");
-        }
-
-         */
-
     }
 
-
-    //take elements from v1 of salesman problem
 }
