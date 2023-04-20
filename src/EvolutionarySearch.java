@@ -105,10 +105,7 @@ public class EvolutionarySearch {
         chosenLocations = new ArrayList<>();
         survivors = new ArrayList<>();
 
-
-        //choose elements to use
         chooseElements();   //chooses locations, characters, and enemies to pop into the tasks
-        //choose elements is here in random search bc we only want elements to be chosen once in each run
 
         //testQuests(); //test quests for fitness
         //evaluateQuest(randomQuest());     //test randomly generated quest for fitness
@@ -119,26 +116,24 @@ public class EvolutionarySearch {
         while (currentGen <= GENERATION_NUMBER){
             System.out.println("Current generation: " + currentGen);
 
+            //setup for data collection
             if (currentGen == 1){
                 maxValue = fitness.get(20);
                 minValue = fitness.get(20);
                 fitnessSum =0;
             }
-            tournamentSelection(3,50);
-            int pairsOfChildren = 25; //input half the number of children required 50*2=100 children
-            for(int i =1; i<=pairsOfChildren;i++){
-                //produces two children
-                recombination();
-            }
+            tournamentSelection(3,80);
+            int pairsOfChildren = 50; //input half the number of children required 50*2=100 children
+            for(int i =1; i<=pairsOfChildren;i++){ recombination(); } //produces two children
 
-
+            survivorSelection();
             collectData();
-            nextGenSetup();
             currentGen++;
-
+            if (currentGen != GENERATION_NUMBER){ nextGenSetup(); } // do not setup new generation on the last gen
         }
-        int fitnessAvg = fitnessSum / (GENERATION_NUMBER * POPULATION_SIZE);
+        for (ArrayList<ArrayList<Integer>> quest: population) { fillTasks(quest); }  //fill last quests made
 
+        int fitnessAvg = fitnessSum / (GENERATION_NUMBER * POPULATION_SIZE);
         System.out.println("Minimum fitness:" + minValue + "Maximum fitness:" + maxValue + "Average:" +fitnessAvg);
 
     }
@@ -482,15 +477,12 @@ public class EvolutionarySearch {
      */
     public static void fieldMutation(){
         int randNum;
-
         for (ArrayList<ArrayList<Integer>> child : children) {
-            randNum = random_method.nextInt(101); //gets random number from 0-100
-
-            if(randNum <= 20){
+            randNum = random_method.nextInt(100); //gets random number from 0-99
+            if(randNum < 20){
                 children.set(children.indexOf(child), mutateField(child)); //replace child with mutated child
             }
         }
-
     }
 
     private static ArrayList<ArrayList<Integer>> mutateField(ArrayList<ArrayList<Integer>> child) {
@@ -501,82 +493,6 @@ public class EvolutionarySearch {
             //mutate each task by probability
             if(randNum <=20){
                task.set(child.indexOf(task), actions.get(random_method.nextInt(actions.size())));
-              /*
-               //TODO: find way to assign elements to tasks when the task changes
-                //task changes here and method gets called????
-
-                if(task.get(0) == 103){ task.add(enemies.get(random_method.nextInt(enemies.size())));
-                } else if (task.get(0) == 104) { task.add(readables.get(random_method.nextInt(readables.size())));
-                } else if (task.get(0) == 105) { task.add(chosenItem);
-                } else if (task.get(0) == 106) { task.add(chosenItem);
-                } else if (task.get(0) == 101) {
-                    if (child.indexOf(task) == 0){
-                        boolean found = false;
-                        int next = 0;
-                        //go to the next goto or talk to
-                        while(!found){
-                            for (int i=1; i < child.size(); i++){
-                                if(child.get(i).get(0) == 101 || child.get(i).get(0) == 102){
-                                    found = true;
-                                    next = i;
-                                    break;
-                                } }
-                        }
-                        String charToLoc;
-                        if(child.get(next).get(0) == 101){  //if next is goto
-                            for (int loc: locations){ if(loc != child.get(next).get(1)) { task.add(loc);} }
-                        } else if (child.get(next).get(0) == 102) {   //next task is talk to
-                            charToLoc = String.valueOf(child.get(next).get(1)).substring(0, 3);
-                            task.add(Integer.valueOf(charToLoc));
-                        } else {    //there is no goto or talk to after
-                            task.add(random_method.nextInt(locations.size())); //assign random location
-                        }
-                    } else if (child.indexOf(task) == child.size()-1) {     //task is in the end
-                        boolean found = false;
-                        int prev = 0;
-                        //go to the next goto or talk to
-                        while(!found){
-                            for (int i=0; i < child.size()-1; i++){
-                                if(child.get(i).get(0) == 101 || child.get(i).get(0) == 102){
-                                    found = true;
-                                    prev = i;
-                                    break;
-                                } }
-                        }
-                        String charToLoc;
-                        if(child.get(prev).get(0) == 101){  //if prev is goto, set different location
-                            for (int loc: locations){ if(loc != child.get(prev).get(1)) { task.add(loc);} }
-                        } else if (child.get(prev).get(0) == 102) {   //if prev is talk to
-                            charToLoc = String.valueOf(child.get(prev).get(1)).substring(0, 3);
-                            for (int loc: locations){ if(loc != Integer.valueOf(charToLoc)) { task.add(loc);} }
-                        } else {    //there is no goto or talk to prev
-                            task.add(random_method.nextInt(locations.size())); //assign random location
-                        }
-                    } else {    //task is in the middle
-                       //can't really do anything that will make sense, so just put a random location
-                        task.add(random_method.nextInt(locations.size())); //assign random location
-                    }
-
-                } else if (task.get(0) == 102){
-                    //TODO: give up
-                    //just realised there is no point in filling in elements in the middle of the run, since the fitness function does not care about it
-
-
-
-                }
-
-
-
-
-
-                // if it is in the middle of the quest, iterate before the element, find the last talk to or go to
-                    //if the last is go to, set the other location or same character in task
-                    //if the last is talk to, set the other location or same character in task
-                    //if none found before, iterate after the quest,  find the first talk to or go to
-                        //if the first is go to, set the other location or other character in task
-                        //if the first is talk to, set the same location, set same character
-
-            */
             }
         }
         return child;
@@ -608,19 +524,15 @@ public class EvolutionarySearch {
     public static void nextGenSetup(){
         //survivors are the new population
         population.clear();
-        //population.addAll(survivors); new population will be created randomly upon new iteration
+        population.addAll(survivors);
 
         fitness.clear();
-        //evaluation(survivors, fitness); //evaluates new population
+        fitnessFunction();
 
         //empty arrays
         parents.clear();
         children.clear();
         survivors.clear();
-        //chosenCharacters.clear();
-        chosenLocations.clear();
-        //chosenItem = null;
-
     }
 
 
