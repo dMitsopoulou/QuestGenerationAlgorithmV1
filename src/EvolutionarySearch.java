@@ -50,6 +50,7 @@ public class EvolutionarySearch {
         enemies = new ArrayList<>();
         taskAvg = new ArrayList<>(Arrays.asList(4,2,3,2,2,2));
 
+
         actions.add(101);   //goto
         actions.add(102);   //talk to
         actions.add(103);   //Fight
@@ -102,6 +103,7 @@ public class EvolutionarySearch {
         survivors = new ArrayList<>();
         chosenCharacters = new ArrayList<>();
         chosenLocations = new ArrayList<>();
+        survivors = new ArrayList<>();
 
 
         //choose elements to use
@@ -587,8 +589,16 @@ public class EvolutionarySearch {
 
     public static void survivorSelection(){
         //TODO: calculate average of generation
-            //individuals of the population who are less fit than average get replaced by random children
+            //survivors have a fitness >= than average
+        int genFitnessAvg = 0;
+        for (int i=0; i< fitness.size(); i++) { genFitnessAvg = fitnessSum + fitness.get(i); }
+        genFitnessAvg = genFitnessAvg / fitness.size();
 
+        //select survivors from population
+        for (Integer num: fitness) { if (num > genFitnessAvg) { survivors.add(population.get(fitness.indexOf(num))); } }
+
+        //fill the rest of the survivors with the children
+        for(int i = 0; i< POPULATION_SIZE - survivors.size(); i++){ survivors.add(children.get(random_method.nextInt(children.size()))); }
 
     }
 
